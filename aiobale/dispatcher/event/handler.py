@@ -34,8 +34,15 @@ class CallableObject:
         for name, param in sig.parameters.items():
             if name in kwargs:
                 filtered_kwargs[name] = kwargs[name]
-            elif param.annotation.__name__ == "Client" and "client" in kwargs:
-                filtered_kwargs[name] = kwargs["client"]
+            else:
+                annotation = param.annotation
+                annotation_name = (
+                    annotation
+                    if isinstance(annotation, str)
+                    else getattr(annotation, "__name__", None)
+                )
+                if annotation_name == "Client" and "client" in kwargs:
+                    filtered_kwargs[name] = kwargs["client"]
 
         wrapped = partial(callback, *args, **filtered_kwargs)
         if self.awaitable:

@@ -615,7 +615,7 @@ class Client:
             if message_id not in self._ignored_messages.targets:
                 return False
 
-            self._ignored_messages.targets.remove()
+            self._ignored_messages.targets.remove(message_id)
 
         return True
 

@@ -50,12 +50,20 @@ class AiohttpSession(BaseSession):
     def _build_headers(self, token: str) -> Dict[str, str]:
         return {"User-Agent": self.user_agent, "Cookie": f"access_token={token}"}
 
+    def _create_client_session(
+        self, timeout: Optional[aiohttp.ClientTimeout] = None
+    ) -> aiohttp.ClientSession:
+        kwargs: Dict[str, Any] = {}
+        if timeout is not None:
+            kwargs["timeout"] = timeout
+        if self.proxy:
+            kwargs["proxy"] = self.proxy
+        return aiohttp.ClientSession(**kwargs)
+
     async def connect(self, token: str):
         if not self.session or self.session.closed:
             session_timeout = aiohttp.ClientTimeout(total=None)
-            self.session = aiohttp.ClientSession(
-                timeout=session_timeout, proxy=self.proxy
-            )
+            self.session = self._create_client_session(timeout=session_timeout)
 
         if self._running:
             raise AiobaleError("Client is already running")
@@ -134,7 +142,7 @@ class AiohttpSession(BaseSession):
         token: Optional[str] = None,
     ) -> Union[bytes, str, BaleType]:
         if not self.session:
-            self.session = aiohttp.ClientSession(proxy=self.proxy)
+            self.session = self._create_client_session()
 
         headers = {
             "User-Agent": self.user_agent,
@@ -177,7 +185,7 @@ class AiohttpSession(BaseSession):
         if session is None:
             own_session = True
             session_timeout = aiohttp.ClientTimeout(total=None)
-            session = aiohttp.ClientSession(timeout=session_timeout, proxy=self.proxy)
+            session = self._create_client_session(timeout=session_timeout)
 
         headers = {
             "Origin": "https://web.bale.ai",
@@ -223,7 +231,7 @@ class AiohttpSession(BaseSession):
         if session is None:
             own_session = True
             session_timeout = aiohttp.ClientTimeout(total=None)
-            session = aiohttp.ClientSession(timeout=session_timeout, proxy=self.proxy)
+            session = self._create_client_session(timeout=session_timeout)
 
         headers = {
             "User-Agent": self.user_agent,
